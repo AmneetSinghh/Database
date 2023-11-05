@@ -1,0 +1,142 @@
+select xmin,xmax, * from mvcc_test;
+
+/* page information */
+
+
+select lp, t_ctid as ctid, t_xmin as xmin, t_xmax as xmax, (t_infomask & 128)::boolean as xmax_is_lock,
+ (t_infomask & 1024)::boolean as xmax_is_committed,
+(t_infomask & 2048)::boolean as xmax_rolled_back,
+(t_infomask & 4096)::boolean as xmax_multixact,
+t_attrs[1] as p_id,
+t_attrs[2] as p_val from heap_page_item_attrs(get_raw_page('table_name',0), 'mvcc_test');
+
+
+
+CREATE TABLE test_2(
+  id SERIAL PRIMARY KEY NOT NULL,
+  name CHARACTER VARYING(255)
+);
+
+
+
+select lp, t_ctid as ctid,
+t_xmin as xmin,
+(t_infomask & 128)::boolean as xmin_is_lock,
+ (t_infomask & 1024)::boolean as xmin_is_committed,
+(t_infomask & 2048)::boolean as xmin_rolled_back,
+
+t_xmax as xmax,
+(t_infomask & 128)::boolean as xmax_is_lock,
+ (t_infomask & 1024)::boolean as xmax_is_committed,
+(t_infomask & 2048)::boolean as xmax_rolled_back,
+(t_infomask & 4096)::boolean as xmax_multixact,
+t_attrs[1] as p_id,
+t_attrs[2] as p_val from heap_page_item_attrs(get_raw_page('test',0), 'test');
+
+
+
+
+terminologies :
+xmax_rolled_back / xmin_rolled_back   1 :  ignore if there is rollback;
+txid_current_snapshot : Whenever someone commits, its updated.
+when row deleted :
+    xmin_is_committed = 1
+    xmax_is_committed = 1
+
+when row updated :
+    deletes then updates :
+    for old row :
+        xmin_is_committed = 1
+        xmax_is_committed = 1
+        not visible in main table
+    for new row :
+        xmin updated to current txnId
+        xmax = 0
+
+
+
+
+Isolation state : Read committed :
+
+T1 inserts new row :
+
+
+
+
+
+CREATE TABLE test_updates(
+  id SERIAL PRIMARY KEY NOT NULL,
+  name CHARACTER VARYING(255)
+);
+
+
+
+-------                                     infomask is 16 bits                          -------------
+
+select lp, t_ctid as ctid,
+t_xmin as xmin,
+t_xmax as xmax,
+(t_infomask & 0x0001)::boolean AS has_null_attributes,
+(t_infomask & 0x0002)::boolean AS has_var_width_attributes,
+(t_infomask & 0x0004)::boolean AS has_external_stored_attributes,
+(t_infomask & 0x0008)::boolean AS has_oid_field,
+(t_infomask & 0x0010)::boolean AS xmax_is_key_shared_locker,
+(t_infomask & 0x0020)::boolean AS combo_cid,
+(t_infomask & 0x0040)::boolean AS xmax_is_exclusive_locker,
+(t_infomask & 0x0080)::boolean AS xmax_is_locker_only,
+(t_infomask & (0x0040 | 0x0010))::boolean AS xmax_is_shared_locker, -- Combined
+(t_infomask & 0x0100)::boolean AS xmin_committed,
+(t_infomask & 0x0200)::boolean AS xmin_invalid_or_aborted,
+((t_infomask & 0x0100) | (t_infomask & 0x0200))::boolean AS xmin_frozen,
+(t_infomask & 0x0400)::boolean AS xmax_committed,
+(t_infomask & 0x0800)::boolean AS xmax_invalid_or_aborted,
+(t_infomask & 0x1000)::boolean AS xmax_is_multi_xact_id,
+(t_infomask & 0x2000)::boolean AS updated_version,
+(t_infomask & 0x4000)::boolean AS moved_off,
+(t_infomask & 0x8000)::boolean AS moved_in
+ from heap_page_item_attrs(get_raw_page('internal',0), 'internal');
+
+
+
+
+select lp, t_ctid as ctid,
+t_xmin as xmin,
+t_xmax as xmax,
+    (t_infomask & 8)::boolean AS has_oid_field,
+    (t_infomask & 16)::boolean AS xmax_is_key_shared_locker,
+    (t_infomask & 64)::boolean AS xmax_is_exclusive_locker,
+    (t_infomask & 128)::boolean AS xmax_is_locker_only,
+    (t_infomask & (64 | 16))::boolean AS xmax_is_shared_locker, -- Combined
+    (t_infomask & 256)::boolean AS xmin_committed,
+    (t_infomask & 512)::boolean AS xmin_invalid_or_aborted,
+    ((t_infomask & 256) | (t_infomask & 512))::boolean AS xmin_frozen,
+    (t_infomask & 1024)::boolean AS xmax_committed,
+    (t_infomask & 2048)::boolean AS xmax_invalid_or_aborted,
+    (t_infomask & 4096)::boolean AS xmax_is_multi_xact_id,
+    (t_infomask & 8192)::boolean AS updated_version,
+    (t_infomask & 16384)::boolean AS moved_off,
+    (t_infomask & 32768)::boolean AS moved_in
+ from heap_page_item_attrs(get_raw_page('internal',0), 'internal');
+
+
+
+
+SELECT
+    lp,
+    t_ctid AS ctid,
+    t_xmin AS xmin,
+    t_xmax AS xmax,
+    CASE WHEN (t_infomask & 16)::boolean THEN 'true' ELSE 'false' END AS xmax_is_key_shared_locker,
+    CASE WHEN (t_infomask & 64)::boolean THEN 'true' ELSE 'false' END AS xmax_is_exclusive_locker,
+    CASE WHEN (t_infomask & 128)::boolean THEN 'true' ELSE 'false' END AS xmax_is_locker_only,
+    CASE WHEN (t_infomask & (64 | 16))::boolean THEN 'true' ELSE 'false' END AS xmax_is_shared_locker, -- Combined
+    CASE WHEN (t_infomask & 256)::boolean THEN 'true' ELSE 'false' END AS xmin_committed,
+    CASE WHEN (t_infomask & 512)::boolean THEN 'true' ELSE 'false' END AS xmin_invalid_or_aborted,
+    CASE WHEN (t_infomask & 1024)::boolean THEN 'true' ELSE 'false' END AS xmax_committed,
+    CASE WHEN (t_infomask & 2048)::boolean THEN 'true' ELSE 'false' END AS xmax_invalid_or_aborted,
+    CASE WHEN (t_infomask & 4096)::boolean THEN 'true' ELSE 'false' END AS xmax_is_multi_xact_id
+ FROM heap_page_item_attrs(get_raw_page('pos_3',0), 'pos_3');
+
+
+
+ BACKGROUND THREAD  UPDATES INFOMASK INFO
