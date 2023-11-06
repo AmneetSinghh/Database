@@ -1,0 +1,16 @@
+/* COMMMAND : build the container from Dockerfile : 
+// run below command in which you have docker file , it creates image from [Dockerfile].
+ docker build -t pgshard .
+
+
+docker run --name pgshard1 -e POSTGRES_PASSWORD=hello   -p 5433:5432 -d pgshard
+docker run --name pgshard2 -e POSTGRES_PASSWORD=hello   -p 5434:5432 -d pgshard
+docker run --name pgshard3 -e POSTGRES_PASSWORD=hello   -p 5435:5432 -d pgshard
+
+  // For Entry into container.
+docker exec -it container_name psql -U postgres
+
+
+
+*/
+

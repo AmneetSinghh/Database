@@ -1,0 +1,10 @@
+/*
+For postgres Container :
+// supplying password is necessary.
+
+docker run --name pgshard1 -e POSTGRES_PASSWORD=hello   -p 5433:5432 -d pgshard
+
+For entry into postgres:
+
+docker exec -it container_name psql -U postgres
+*/
