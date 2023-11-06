@@ -6,7 +6,8 @@ const crypto = require("crypto")
 const HashRing = require("hashring")
 /*
 TODO:
-Implement our own way.. To split the url-country side.... asia, us on different shards......
+Implement our own way.. To split the url-country side.... asia, us on different shards...
+
 /*
 
 * Default serverNode pushed into consistent hash
