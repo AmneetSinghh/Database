@@ -29,7 +29,7 @@ docker stop pmaster pstandby
  touch standby.signal
 
 
- /// add into pmater/postgresql.conf ( it means gives priority to first only....)
+ /// add into pmater/postgresql.conf ( it means gives priority to first only....) //
 
  synchronous_standby_names = 'first 1 (standby1)'        # standby servers that provide sync rep
 
