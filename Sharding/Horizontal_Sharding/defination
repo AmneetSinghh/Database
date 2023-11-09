@@ -1,0 +1,6 @@
+1. Horizontal partition : 
+
+when we partition the table by rows, 
+30% rows in 1st Shard
+30% rows in 2nd Shard
+40% rows in 3rd Shard

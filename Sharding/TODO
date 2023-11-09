@@ -1,0 +1,5 @@
+1. Research more about how postgres do sharding and how big companies do.
+2. if we have 5 partitions in current server, how to move last 2 partitions to new shard.
+3. if sharding business logic changes how existing shards migrate to new shard?
+4. decouple application and database layer, trying adding proxy in which sharding logic will be written
+5. explore postgres tools for adding sharding.

@@ -1,0 +1,53 @@
+docker run --name pmaster -p 5433:5432 -v /Users/amneet.singh/Desktop/System\ design/Databse/Replication/rep/pmaster_data:/var/lib/postgresql/data -e POSTGRES_PASSWORD=postgres -d postgres
+
+docker run --name pstandby -p 5436:5432 -v /Users/amneet.singh/Desktop/System\ design/Databse/Replication/rep/pstandby:/var/lib/postgresql/data -e POSTGRES_PASSWORD=hello -d postgres
+
+docker stop pmaster pstandby
+
+// move backup server data to new backup
+mv pstandby pstandby_data_bk
+
+
+// copy master datq to standby server( read replica)
+
+cp -R pmaster_data pstandby
+
+/// add below this into last line of pmaster/pg_hba.conf    (connect master with pstandby server.)
+
+host replication postgres all scram-sha-256
+
+// update in pstandby/postgresql.conf  authentication for connecting to master.
+
+primary_conninfo = 'application_name=standby1 host=localhost port=5433 user=postgres password=postgres'                 # connection string to sending server
+
+
+
+docker stop pmaster pstandby
+
+
+/// make file : into standby folder, this makes him ready-only instance : 
+ touch standby.signal
+
+
+ /// add into pmater/postgresql.conf ( it means gives priority to first only....)
+
+ synchronous_standby_names = 'first 1 (standby1)'        # standby servers that provide sync rep
+
+
+
+
+docker run --name postgres-master -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres -d postgres
+
+
+
+docker run --name postgres-slave -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres -e POSTGRES_MASTER_SERVICE=postgres-master -e POSTGRES_MASTER_PORT=5432 -e POSTGRES_MASTER_USER=postgres -e POSTGRES_MASTER_PASSWORD=postgres --network mynetwork -d postgres
+
+
+
+
+
+// for connecting : 
+
+docker exec -it postgres_master  psql -U postgresql
+docker exec -it postgres_slave_1  psql -U postgresql
+docker exec -it postgres_slave_2  psql -U postgresql

@@ -18,9 +18,10 @@ CREATE TABLE employees (
 
 
  -- Create a function to generate random strings
-CREATE OR REPLACE FUNCTION random_string(length integer) RETURNS text AS $$
+ CREATE OR REPLACE FUNCTION random_string(length integer) RETURNS text AS $$
   SELECT array_to_string(array_agg(chr((65 + round(random() * 25))::int)), '')
   FROM generate_series(1, $1);
+$$ LANGUAGE SQL;
 
   INSERT INTO mvcc_test (name)
   SELECT random_string(10)

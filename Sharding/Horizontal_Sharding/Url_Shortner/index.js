@@ -1,3 +1,7 @@
+/*
+            ------ Horizontal Sharding --- Sharding by rows for x table --- 
+*/
+
 
 
 const app = require("express")();
@@ -6,10 +10,11 @@ const crypto = require("crypto")
 const HashRing = require("hashring")
 /*
 TODO:
-Implement our own way.. To split the url-country side.... asia, us on different shards...
+Implement how to split the url-country side.... asia, us on different shards.
+
+Sol : Pass countrySide code into hash, so for asia it will always goes to same server, same for america.
 
 /*
-
 * Default serverNode pushed into consistent hash
 */
 const hr = new HashRing();
@@ -20,6 +25,7 @@ hr.add("5435")
 /*
 * Default 3 shards
 */
+
 const clients = {
     "5433": new Client(
         {
